@@ -1,0 +1,18 @@
+<Solution>
+  <Folder Name="/src/" />
+  <Folder Name="/src/1. Bank.Gateway/">
+    <Project Path="1. Bank.Gateway/Bank.Gateway.Api/Bank.Gateway.Api.csproj" />
+  </Folder>
+  <Folder Name="/src/2. Bank.Transaction/">
+    <Project Path="2. Bank.Transaction/Bank.Transaction.Api/Bank.Transaction.Api.csproj" />
+  </Folder>
+  <Folder Name="/src/3. Bank.Balance/">
+    <Project Path="3. Bank.Balance/Bank.Balance.Api/Bank.Balance.Api.csproj" />
+  </Folder>
+  <Folder Name="/src/4. Bank.Transfer/">
+    <Project Path="4. Bank.Transfer/Bank.Transfer.Api/Bank.Transfer.Api.csproj" />
+  </Folder>
+  <Folder Name="/src/5. Bank.Notification/">
+    <Project Path=" 5. Bank.Notification/Bank.Notification.Api/Bank.Notification.Api.csproj" />
+  </Folder>
+</Solution>
