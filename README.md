@@ -28,18 +28,18 @@ az ad sp create-for-rbac --name "transfer-app" --role="Contributor" --scopes="/s
 _At the console, you will be delivered with the credentials:
 ```powershell
 {
-    $appId = "xxxxxxxxxxxxxxxx"  # ARM_CLIENT_ID
+    $appId = ""  # ARM_CLIENT_ID
     $displayName = "transfer-app"
-    $password = "xxxxxxxxxxxxxxxxxxxxxxxxxxxx" # ARM_CLIENT_SECRET
-    tenant = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxx"  # ARM_TENANT_ID
+    $password = "" # ARM_CLIENT_SECRET
+    tenant = ""  # ARM_TENANT_ID
 }
 ```
 ## Step 5: Save Credentials as Environment Variables
 _Use the credentials provided to set environment variables for automatic Azure access.
 ```powershell
-$env:ARM_CLIENT_ID = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-$env:ARM_CLIENT_SECRET = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-$env:ARM_SUBSCRIPTION_ID = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-$env:ARM_TENAT_ID = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+$env:ARM_CLIENT_ID = ""
+$env:ARM_CLIENT_SECRET = ""
+$env:ARM_SUBSCRIPTION_ID = ""
+$env:ARM_TENAT_ID = ""
 ```
 _Copy these four variables into your console within the project scope and press Enter:
