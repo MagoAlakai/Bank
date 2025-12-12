@@ -6,7 +6,7 @@ public class ProcessService(ITransactionDbContext transactionDbContext, IService
         switch (subscription)
         {
             case ReceivedSubscriptionsConstants.TRANSACTION_INITIATED:
-                await Transaction_initiated(message);
+                await TransactionInitiated(message);
                 break;
             case ReceivedSubscriptionsConstants.BALANCE_CONFIRMED:
                 await BalanceConfirmed(message);
@@ -23,7 +23,7 @@ public class ProcessService(ITransactionDbContext transactionDbContext, IService
         }
     }
 
-    private async Task Transaction_initiated(string message)
+    private async Task TransactionInitiated(string message)
     {
         TransactionEntity? transactionEntity = JsonConvert.DeserializeObject<TransactionEntity>(message);
 
@@ -31,6 +31,7 @@ public class ProcessService(ITransactionDbContext transactionDbContext, IService
         transactionEntity?.SourceAccount = "00908929778493-43984";
         transactionEntity?.DestinationAccount = "32408929778493-43984";
         TransactionEntity? savedTransactionEntity = await ProcessDatabase(transactionEntity);
+
         var eventModel = new
         {
             savedTransactionEntity.CorrelationId,
@@ -49,22 +50,78 @@ public class ProcessService(ITransactionDbContext transactionDbContext, IService
 
     private async Task BalanceConfirmed(string message)
     {
-        throw new NotImplementedException();
+        TransactionEntity? transactionEntity = JsonConvert.DeserializeObject<TransactionEntity>(message);
+        transactionEntity?.CurrentState = CurrentStateConstants.PENDING;
+        TransactionEntity? savedTransactionEntity = await ProcessDatabase(transactionEntity);
+
+        var eventModel = new
+        {
+            savedTransactionEntity.CorrelationId,
+            savedTransactionEntity.Amount,
+            savedTransactionEntity.SourceAccount,
+            savedTransactionEntity.DestinationAccount,
+            savedTransactionEntity.CustomerId,
+        };
+
+        await serviceBusSenderService.Execute(eventModel, SendSubscriptionConstants.TRANSFER_INITIATED);
     }
 
     private async Task BalanceFailed(string message)
     {
-        throw new NotImplementedException();
-    }
+        TransactionEntity? transactionEntity = JsonConvert.DeserializeObject<TransactionEntity>(message);
+        transactionEntity?.CurrentState = CurrentStateConstants.CANCELED;
+        TransactionEntity? savedTransactionEntity = await ProcessDatabase(transactionEntity);
 
-    private async Task TransferFailed(string message)
-    {
-        throw new NotImplementedException();
+        var eventModel = new
+        {
+            savedTransactionEntity.CorrelationId,
+            savedTransactionEntity.CustomerId
+        };
+
+        //MS Notification
+        await serviceBusSenderService.Execute(eventModel, SendSubscriptionConstants.TRANSACTION_FAILED);
     }
 
     private async Task TransferConfirmed(string message)
     {
-        throw new NotImplementedException();
+        TransactionEntity? transactionEntity = JsonConvert.DeserializeObject<TransactionEntity>(message);
+        transactionEntity?.CurrentState = CurrentStateConstants.COMPLETED;
+        TransactionEntity? savedTransactionEntity = await ProcessDatabase(transactionEntity);
+
+        var eventModel = new
+        {
+            savedTransactionEntity.CorrelationId,
+            savedTransactionEntity.Amount,
+            savedTransactionEntity.CustomerId,
+        };
+
+        //MS Notification
+        await serviceBusSenderService.Execute(eventModel, SendSubscriptionConstants.TRANSACTION_COMPLETED);
+
+        //MS Balance
+        await serviceBusSenderService.Execute(eventModel, SendSubscriptionConstants.TRANSFER_CONFIRMED_BALANCE);
+    }
+
+    private async Task TransferFailed(string message)
+    {
+        TransactionEntity? transactionEntity = JsonConvert.DeserializeObject<TransactionEntity>(message);
+        transactionEntity?.CurrentState = CurrentStateConstants.CANCELED;
+        TransactionEntity? savedTransactionEntity = await ProcessDatabase(transactionEntity);
+
+        var eventModel = new
+        {
+            savedTransactionEntity.CorrelationId,
+            savedTransactionEntity.Amount,
+            savedTransactionEntity.SourceAccount,
+            savedTransactionEntity.DestinationAccount,
+            savedTransactionEntity.CustomerId,
+        };
+
+        //MS Notification
+        await serviceBusSenderService.Execute(eventModel, SendSubscriptionConstants.TRANSACTION_FAILED);
+
+        //MS Balance
+        await serviceBusSenderService.Execute(eventModel, SendSubscriptionConstants.TRANSFER_FAILED_BALANCE);
     }
 
     public async Task<TransactionEntity> ProcessDatabase(TransactionEntity transactionEntity)

@@ -1,4 +1,4 @@
-﻿namespace Bank.Transaction.Api.External.ServiceBusRecieve;
+﻿namespace Bank.Balance.Api.External.ServiceBusRecieve;
 public class ServiceBusRecieveService : BackgroundService
 {
     private readonly IMediator _mediator;
@@ -11,11 +11,9 @@ public class ServiceBusRecieveService : BackgroundService
 
         string[] subscriptions = new[]
         {
-            ReceivedSubscriptionsConstants.TRANSACTION_INITIATED,
-            ReceivedSubscriptionsConstants.BALANCE_CONFIRMED,
-            ReceivedSubscriptionsConstants.BALANCE_FAILED,
-            ReceivedSubscriptionsConstants.TRANSFER_FAILED,
-            ReceivedSubscriptionsConstants.TRANSFER_CONFIRMED
+            ReceivedSubscriptionsConstants.BALANCE_INITIATED,
+            ReceivedSubscriptionsConstants.TRANSFER_CONFIRMED_BALANCE,
+            ReceivedSubscriptionsConstants.TRANSFER_FAILED_BALANCE
         };
 
         _serviceBusProcessors = subscriptions.Select(subscription =>

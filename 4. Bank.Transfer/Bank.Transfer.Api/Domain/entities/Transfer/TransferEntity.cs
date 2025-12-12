@@ -3,7 +3,7 @@ public class TransferEntity
 {
     public int Id { get; set; }
     public string? CorrelationId { get; set; }
-    public DateTime TransferDate { get; set; }
+    public DateTime TransferDate { get; set; } = DateTime.UtcNow;
     public string? CurrentState { get; set; }
     public decimal Amount { get; set; }
     public string? SourceAccount { get; set; }

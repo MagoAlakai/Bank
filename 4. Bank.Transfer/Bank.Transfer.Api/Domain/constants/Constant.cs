@@ -1,7 +1,7 @@
 ﻿namespace Bank.Transfer.Api.Domain.Constants;
 public static class CurrentStateConstants
 {
-    public const string PENDING = "Pending";
+    public const string COMPLETED = "Completed";
 }
 public class ReceivedSubscriptionsConstants
 {
