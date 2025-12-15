@@ -1,6 +1,14 @@
-﻿global using Bank.Notification.Api.Applicacion.Interfaces.Database;
+﻿global using Azure.Messaging.ServiceBus;
+global using Bank.Notification.Api.Applicacion.External.SendGridEmail;
+global using Bank.Notification.Api.Applicacion.Features.Handlers;
+global using Bank.Notification.Api.Applicacion.Features.Process;
+global using Bank.Notification.Api.Applicacion.Interfaces.Database;
+global using Bank.Notification.Api.Domain.Constants;
 global using Bank.Notification.Api.Domain.Entities.Notification;
+global using Bank.Notification.Api.Domain.Events;
+global using Bank.Notification.Api.External.SendGridEmail;
+global using Bank.Notification.Api.External.ServiceBusRecieve;
 global using Bank.Notification.Api.Persistence.Database;
-global using Microsoft.AspNetCore.Mvc;
+global using MediatR;
 global using Microsoft.Azure.Cosmos;
 global using Newtonsoft.Json;

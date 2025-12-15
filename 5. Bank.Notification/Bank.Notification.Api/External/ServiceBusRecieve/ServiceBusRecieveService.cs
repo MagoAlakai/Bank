@@ -1,6 +1,4 @@
-﻿using Bank.Transfer.Api.External.ServiceBusRecieve;
-
-namespace Bank.Transfer.Api.External.ServiceBusRecieve;
+﻿namespace Bank.Notification.Api.External.ServiceBusRecieve;
 public class ServiceBusRecieveService : BackgroundService
 {
     private readonly IMediator _mediator;
@@ -13,7 +11,8 @@ public class ServiceBusRecieveService : BackgroundService
 
         string[] subscriptions = new[]
         {
-            ReceivedSubscriptionsConstants.TRANSFER_INITIATED
+            ReceivedSubscriptionsConstants.TRANSACTION_COMPLETED,
+            ReceivedSubscriptionsConstants.TRANSACTION_FAILED
         };
 
         _serviceBusProcessors = subscriptions.Select(subscription =>
