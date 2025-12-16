@@ -19,6 +19,7 @@ public class ProcessService(INotificationDbContext notificationDbContext, ISendG
 
             string status = notificationEntity.TransactionState ? "successful" : "failed";
             emailPayload = CreateSendGridModel.Create(toEmail, fromEmail, status, notificationEntity.Content);
+            Console.WriteLine(emailPayload);
         }
         else
         {
