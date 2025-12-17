@@ -1,5 +1,5 @@
 ﻿namespace Bank.Transaction.Api.Applicacion.Features.Process;
-public class ProcessService(ITransactionDbContext transactionDbContext, IServiceBusSenderService serviceBusSenderService) : IProcessService
+public class ProcessService(IUnitOfWork unitOfWork, IServiceBusSenderService serviceBusSenderService) : IProcessService
 {
     public async Task Execute(string message, string subscription)
     {
@@ -126,20 +126,20 @@ public class ProcessService(ITransactionDbContext transactionDbContext, IService
 
     public async Task<TransactionEntity> ProcessDatabase(TransactionEntity transactionEntity)
     {
-        TransactionEntity? existEntity = await transactionDbContext.Transactions.FirstOrDefaultAsync(x => x.CorrelationId == transactionEntity.CorrelationId);
+        TransactionEntity? existEntity = await unitOfWork.transactionRepository.GetByIdAsync(transactionEntity.Id);
 
         if (existEntity is null)
         {
-            await transactionDbContext.Transactions.AddAsync(transactionEntity);
-            await transactionDbContext.SaveAsync();
+            await unitOfWork.transactionRepository.PostAsync(transactionEntity);
+            await unitOfWork.SaveChangesAsync();
             return transactionEntity;
         }
         else
         {
             existEntity.CurrentState = transactionEntity.CurrentState;
-            transactionDbContext.Transactions.Update(existEntity);
-            await transactionDbContext.SaveAsync();
-            return existEntity;
+            await unitOfWork.transactionRepository.UpdateAsync(transactionEntity, existEntity.Id);
+            await unitOfWork.SaveChangesAsync();
+            return transactionEntity;
         }
     }
 }

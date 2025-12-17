@@ -2,8 +2,10 @@
 global using Bank.Transaction.Api.Applicacion.Features.Handlers;
 global using Bank.Transaction.Api.Applicacion.Features.Process;
 global using Bank.Transaction.Api.Applicacion.Interfaces.Database;
+global using Bank.Transaction.Api.Applicacion.Interfaces.Persistence;
 global using Bank.Transaction.Api.Application.External.ServiceBusSender;
 global using Bank.Transaction.Api.Domain.Constants;
+global using Bank.Transaction.Api.Domain.Entities;
 global using Bank.Transaction.Api.Domain.Entities.Transaction;
 global using Bank.Transaction.Api.Domain.Events;
 global using Bank.Transaction.Api.External.ServiceBusRecieve;
@@ -11,4 +13,5 @@ global using Bank.Transaction.Api.External.ServiceBusSender;
 global using Bank.Transaction.Api.Persistence.Database;
 global using MediatR;
 global using Microsoft.EntityFrameworkCore;
+global using Microsoft.EntityFrameworkCore.ChangeTracking;
 global using Newtonsoft.Json;
