@@ -3,6 +3,13 @@
 on:
   push:
     branches: [ master ]
+  workflow_dispatch:
+    inputs:
+      redeploy_all:
+        description: "Rebuild & redeploy ALL microservices"
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   detect-changes:
@@ -34,48 +41,52 @@ jobs:
 
       - name: Build matrix from changes
         id: set-matrix
+        shell: bash
         run: |
-          # Si cambia el workflow, redeploy de todo (útil para no quedarte a medias)
-          if [[ "${{ steps.filter.outputs.workflow }}" == "true" ]]; then
-            echo 'matrix={"include":[
-              {"name":"gateway","context":"1. Bank.Gateway/Bank.Gateway.Api","image":"magoalakai/bank-gateway-api","appservice":"transfer-weu-apigateway-appservice"},
-              {"name":"transaction","context":"2. Bank.Transaction/Bank.Transaction.Api","image":"magoalakai/bank-transaction-api","appservice":"transfer-weu-transaction-appservice"},
-              {"name":"balance","context":"3. Bank.Balance/Bank.Balance.Api","image":"magoalakai/bank-balance-api","appservice":"transfer-weu-balance-appservice"},
-              {"name":"transfer","context":"4. Bank.Transfer/Bank.Transfer.Api","image":"magoalakai/bank-transfer-api","appservice":"transfer-weu-transfer-appservice"},
-              {"name":"notification","context":"5. Bank.Notification/Bank.Notification.Api","image":"magoalakai/bank-notification-api","appservice":"transfer-westus-notification-appservice"}
-            ]}' >> $GITHUB_OUTPUT
-            echo "any_changed=true" >> $GITHUB_OUTPUT
-            exit 0
-          fi
+          set -euo pipefail
 
-          include=""
+          add_service () {
+            local name="$1" context="$2" image="$3" appservice="$4"
+            include=$(jq -c \
+              --arg name "$name" \
+              --arg context "$context" \
+              --arg image "$image" \
+              --arg appservice "$appservice" \
+              '. + [{name:$name, context:$context, image:$image, appservice:$appservice}]' <<< "$include")
+          }
 
-          if [[ "${{ steps.filter.outputs.gateway }}" == "true" ]]; then
-            include+='{"name":"gateway","context":"1. Bank.Gateway/Bank.Gateway.Api","image":"magoalakai/bank-gateway-api","appservice":"transfer-weu-apigateway-appservice"},'
-          fi
-          if [[ "${{ steps.filter.outputs.transaction }}" == "true" ]]; then
-            include+='{"name":"transaction","context":"2. Bank.Transaction/Bank.Transaction.Api","image":"magoalakai/bank-transaction-api","appservice":"transfer-weu-transaction-appservice"},'
-          fi
-          if [[ "${{ steps.filter.outputs.balance }}" == "true" ]]; then
-            include+='{"name":"balance","context":"3. Bank.Balance/Bank.Balance.Api","image":"magoalakai/bank-balance-api","appservice":"transfer-weu-balance-appservice"},'
-          fi
-          if [[ "${{ steps.filter.outputs.transfer }}" == "true" ]]; then
-            include+='{"name":"transfer","context":"4. Bank.Transfer/Bank.Transfer.Api","image":"magoalakai/bank-transfer-api","appservice":"transfer-weu-transfer-appservice"},'
-          fi
-          if [[ "${{ steps.filter.outputs.notification }}" == "true" ]]; then
-            include+='{"name":"notification","context":"5. Bank.Notification/Bank.Notification.Api","image":"magoalakai/bank-notification-api","appservice":"transfer-westus-notification-appservice"},'
-          fi
+          include='[]'
 
-          # Quitar la última coma si existe
-          include="${include%,}"
-
-          if [[ -z "$include" ]]; then
-            echo 'matrix={"include":[]}' >> $GITHUB_OUTPUT
-            echo "any_changed=false" >> $GITHUB_OUTPUT
+          # Si es ejecución manual con "redeploy_all=true", redeploy de todo
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ inputs.redeploy_all }}" == "true" ]]; then
+            add_service "gateway"      "1. Bank.Gateway/Bank.Gateway.Api"         "magoalakai/bank-gateway-api"      "transfer-weu-apigateway-appservice"
+            add_service "transaction"  "2. Bank.Transaction/Bank.Transaction.Api" "magoalakai/bank-transaction-api"  "transfer-weu-transaction-appservice"
+            add_service "balance"      "3. Bank.Balance/Bank.Balance.Api"         "magoalakai/bank-balance-api"      "transfer-weu-balance-appservice"
+            add_service "transfer"     "4. Bank.Transfer/Bank.Transfer.Api"       "magoalakai/bank-transfer-api"     "transfer-weu-transfer-appservice"
+            add_service "notification" "5. Bank.Notification/Bank.Notification.Api" "magoalakai/bank-notification-api" "transfer-westus-notification-appservice"
           else
-            echo "matrix={\"include\":[${include}]}" >> $GITHUB_OUTPUT
-            echo "any_changed=true" >> $GITHUB_OUTPUT
+            # Si cambió el workflow, redeploy de todo
+            if [[ "${{ steps.filter.outputs.workflow }}" == "true" ]]; then
+              add_service "gateway"      "1. Bank.Gateway/Bank.Gateway.Api"         "magoalakai/bank-gateway-api"      "transfer-weu-apigateway-appservice"
+              add_service "transaction"  "2. Bank.Transaction/Bank.Transaction.Api" "magoalakai/bank-transaction-api"  "transfer-weu-transaction-appservice"
+              add_service "balance"      "3. Bank.Balance/Bank.Balance.Api"         "magoalakai/bank-balance-api"      "transfer-weu-balance-appservice"
+              add_service "transfer"     "4. Bank.Transfer/Bank.Transfer.Api"       "magoalakai/bank-transfer-api"     "transfer-weu-transfer-appservice"
+              add_service "notification" "5. Bank.Notification/Bank.Notification.Api" "magoalakai/bank-notification-api" "transfer-westus-notification-appservice"
+            else
+              [[ "${{ steps.filter.outputs.gateway }}" == "true" ]] && add_service "gateway" "1. Bank.Gateway/Bank.Gateway.Api" "magoalakai/bank-gateway-api" "transfer-weu-apigateway-appservice"
+              [[ "${{ steps.filter.outputs.transaction }}" == "true" ]] && add_service "transaction" "2. Bank.Transaction/Bank.Transaction.Api" "magoalakai/bank-transaction-api" "transfer-weu-transaction-appservice"
+              [[ "${{ steps.filter.outputs.balance }}" == "true" ]] && add_service "balance" "3. Bank.Balance/Bank.Balance.Api" "magoalakai/bank-balance-api" "transfer-weu-balance-appservice"
+              [[ "${{ steps.filter.outputs.transfer }}" == "true" ]] && add_service "transfer" "4. Bank.Transfer/Bank.Transfer.Api" "magoalakai/bank-transfer-api" "transfer-weu-transfer-appservice"
+              [[ "${{ steps.filter.outputs.notification }}" == "true" ]] && add_service "notification" "5. Bank.Notification/Bank.Notification.Api" "magoalakai/bank-notification-api" "transfer-westus-notification-appservice"
+            fi
           fi
+
+          matrix=$(jq -c --argjson inc "$include" '{include:$inc}' <<< '{}')
+          any_changed=$(jq -r '(.include|length>0) | tostring' <<< "$matrix")
+
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+          echo "any_changed=$any_changed" >> "$GITHUB_OUTPUT"
+
 
   deploy:
     needs: detect-changes
