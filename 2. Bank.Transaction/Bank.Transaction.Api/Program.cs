@@ -1,3 +1,5 @@
+using Bank.Transaction.Api.Persistence.Repositories;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container
@@ -6,6 +8,8 @@ builder.Services.AddDbContext<TransactionDbContext>(options =>
     options.UseSqlServer(builder.Configuration["TRANSACTIONSQLDBCONNECTIONSTRING"]));
 
 builder.Services.AddScoped<ITransactionDbContext,TransactionDbContext>();
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped(typeof(IRepository<>), typeof(BaseRepository<>));
 builder.Services.AddScoped<IProcessService, ProcessService>();
 
 builder.Services.AddSingleton<IServiceBusSenderService, ServiceBusSenderService>();
