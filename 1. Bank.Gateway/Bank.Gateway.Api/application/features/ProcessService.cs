@@ -8,8 +8,8 @@ public class ProcessService (IServiceBusSenderService serviceBusSenderService) :
         {
             CorrelationId = Guid.NewGuid().ToString(),
             Amount= endPointModel.Amount,
-            SourceAccount = endPointModel.SourceAccount,
-            DestinationAccount = endPointModel.DestinationAccount,
+            SourceAccount = "00908929778493-43984",
+            DestinationAccount = "32408929778493-43984",
             CustomerId = endPointModel.CustomerId
         };
 

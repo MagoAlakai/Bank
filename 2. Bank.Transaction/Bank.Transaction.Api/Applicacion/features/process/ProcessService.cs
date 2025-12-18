@@ -1,4 +1,6 @@
-﻿namespace Bank.Transaction.Api.Applicacion.Features.Process;
+﻿using System.Text;
+
+namespace Bank.Transaction.Api.Applicacion.Features.Process;
 public class ProcessService(IUnitOfWork unitOfWork, IServiceBusSenderService serviceBusSenderService) : IProcessService
 {
     public async Task Execute(string message, string subscription)
@@ -52,6 +54,8 @@ public class ProcessService(IUnitOfWork unitOfWork, IServiceBusSenderService ser
     {
         TransactionEntity? transactionEntity = JsonConvert.DeserializeObject<TransactionEntity>(message);
         transactionEntity?.CurrentState = CurrentStateConstants.PENDING;
+        transactionEntity?.SourceAccount = "00908929778493-43984";
+        transactionEntity?.DestinationAccount = "32408929778493-43984";
         TransactionEntity? savedTransactionEntity = await ProcessDatabase(transactionEntity);
 
         var eventModel = new
@@ -75,7 +79,10 @@ public class ProcessService(IUnitOfWork unitOfWork, IServiceBusSenderService ser
         var eventModel = new
         {
             savedTransactionEntity.CorrelationId,
-            savedTransactionEntity.CustomerId
+            savedTransactionEntity.Amount,
+            savedTransactionEntity.SourceAccount,
+            savedTransactionEntity.DestinationAccount,
+            savedTransactionEntity.CustomerId,
         };
 
         //MS Notification
@@ -86,12 +93,16 @@ public class ProcessService(IUnitOfWork unitOfWork, IServiceBusSenderService ser
     {
         TransactionEntity? transactionEntity = JsonConvert.DeserializeObject<TransactionEntity>(message);
         transactionEntity?.CurrentState = CurrentStateConstants.COMPLETED;
+        transactionEntity?.SourceAccount = "00908929778493-43984";
+        transactionEntity?.DestinationAccount = "32408929778493-43984";
         TransactionEntity? savedTransactionEntity = await ProcessDatabase(transactionEntity);
 
         var eventModel = new
         {
             savedTransactionEntity.CorrelationId,
             savedTransactionEntity.Amount,
+            savedTransactionEntity.SourceAccount,
+            savedTransactionEntity.DestinationAccount,
             savedTransactionEntity.CustomerId,
         };
 
@@ -106,6 +117,8 @@ public class ProcessService(IUnitOfWork unitOfWork, IServiceBusSenderService ser
     {
         TransactionEntity? transactionEntity = JsonConvert.DeserializeObject<TransactionEntity>(message);
         transactionEntity?.CurrentState = CurrentStateConstants.CANCELED;
+        transactionEntity?.SourceAccount = "00908929778493-43984";
+        transactionEntity?.DestinationAccount = "32408929778493-43984";
         TransactionEntity? savedTransactionEntity = await ProcessDatabase(transactionEntity);
 
         var eventModel = new
@@ -126,7 +139,13 @@ public class ProcessService(IUnitOfWork unitOfWork, IServiceBusSenderService ser
 
     public async Task<TransactionEntity> ProcessDatabase(TransactionEntity transactionEntity)
     {
-        TransactionEntity? existEntity = await unitOfWork.transactionRepository.GetByIdAsync(transactionEntity.Id);
+        if (transactionEntity is null)
+            throw new InvalidOperationException("transactionEntity null");
+
+        if (string.IsNullOrWhiteSpace(transactionEntity.CorrelationId))
+            throw new InvalidOperationException("CorrelationId vacío");
+
+        TransactionEntity? existEntity = await unitOfWork.transactionRepository.GetByCorrelationIdAsync(transactionEntity.CorrelationId);
 
         if (existEntity is null)
         {
@@ -134,12 +153,20 @@ public class ProcessService(IUnitOfWork unitOfWork, IServiceBusSenderService ser
             await unitOfWork.SaveChangesAsync();
             return transactionEntity;
         }
-        else
-        {
-            existEntity.CurrentState = transactionEntity.CurrentState;
-            await unitOfWork.transactionRepository.UpdateAsync(transactionEntity, existEntity.Id);
-            await unitOfWork.SaveChangesAsync();
-            return transactionEntity;
-        }
+
+        existEntity.CurrentState = transactionEntity.CurrentState;
+
+        if (string.IsNullOrWhiteSpace(transactionEntity.SourceAccount) is false)
+            existEntity.SourceAccount = transactionEntity.SourceAccount;
+
+        if (string.IsNullOrWhiteSpace(transactionEntity.DestinationAccount) is false)
+            existEntity.DestinationAccount = transactionEntity.DestinationAccount;
+
+        if (transactionEntity.Amount > 0 is true)
+            existEntity.Amount = transactionEntity.Amount;
+
+        //await unitOfWork.transactionRepository.UpdateAsync(transactionEntity, existEntity.CorrelationId);
+        await unitOfWork.SaveChangesAsync();
+        return existEntity;
     }
 }

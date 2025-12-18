@@ -1,5 +1,5 @@
 ﻿namespace Bank.Transaction.Api.Domain.Entities.Transaction;
-public class TransactionEntity : BaseEntity
+public class TransactionEntity
 {
     public int Id { get; set; }
     public string? CorrelationId { get; set; }
